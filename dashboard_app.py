@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder
@@ -289,6 +289,174 @@ CSS = """
         font-size: 0.88rem;
         line-height: 1.6;
     }
+
+    /* ── Source badge ─────────────────────────────────── */
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .source-uploaded {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #6ee7b7;
+    }
+    .source-sample {
+        background: rgba(96, 165, 250, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.28);
+        color: #93c5fd;
+    }
+
+    /* ── Active-filter chips ──────────────────────────── */
+    .chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 0.5rem 0 1rem;
+    }
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.18);
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        color: #93c5fd;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+    .chip-label {
+        color: var(--muted);
+        font-size: 0.75rem;
+        margin-right: 2px;
+    }
+    .chips-note {
+        color: var(--muted);
+        font-size: 0.78rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* ── Key takeaways ────────────────────────────────── */
+    .takeaway-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 1rem 0 0.5rem;
+    }
+    @media (max-width: 640px) {
+        .takeaway-wrap { grid-template-columns: 1fr; }
+    }
+    .takeaway-card {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.11));
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        border-radius: 16px;
+        padding: 16px 18px;
+    }
+    .takeaway-label {
+        color: #60a5fa;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 6px;
+    }
+    .takeaway-text {
+        color: #e2ecff;
+        font-size: 0.97rem;
+        line-height: 1.65;
+    }
+
+    /* ── Data-quality block ───────────────────────────── */
+    .dq-block {
+        background: rgba(10, 20, 36, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin: 1rem 0;
+    }
+    .dq-title {
+        color: #94a9c8;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 10px;
+    }
+    .dq-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 8px;
+    }
+    .dq-item {
+        background: rgba(6, 15, 28, 0.55);
+        border-radius: 10px;
+        padding: 8px 12px;
+    }
+    .dq-item-label {
+        color: var(--muted);
+        font-size: 0.76rem;
+        margin-bottom: 2px;
+    }
+    .dq-item-val { font-size: 0.95rem; font-weight: 600; }
+    .dq-good  { color: #34d399; }
+    .dq-warn  { color: #fbbf24; }
+    .dq-bad   { color: #f87171; }
+
+    /* ── Prediction result card ───────────────────────── */
+    .pred-result {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(20, 184, 166, 0.11));
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 18px;
+        padding: 22px 24px;
+        margin-top: 16px;
+        text-align: center;
+    }
+    .pred-result-label {
+        color: #6ee7b7;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 8px;
+    }
+    .pred-result-value {
+        color: #f0fdf4;
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+    .pred-result-conf {
+        color: #86efac;
+        font-size: 0.95rem;
+    }
+
+    /* ── Model info panel ─────────────────────────────── */
+    .model-info {
+        background: rgba(10, 20, 36, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-bottom: 1rem;
+        color: #9fb3d2;
+        font-size: 0.88rem;
+        line-height: 1.7;
+    }
+    .model-info strong { color: #c8d6ea; }
+
+    /* ── Empty-chart annotation ───────────────────────── */
+    .empty-chart-msg {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        border: 1px dashed rgba(148, 163, 184, 0.22);
+        border-radius: 14px;
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
 </style>
 """
 
@@ -424,12 +592,35 @@ def make_figure_base(fig: go.Figure, title: str, height: int = 320) -> go.Figure
     return fig
 
 
+def make_empty_figure(title: str, height: int = 320) -> go.Figure:
+    """Return a styled placeholder figure when there is no data to display."""
+    fig = go.Figure()
+    fig.add_annotation(
+        text="No data available for the current filter selection",
+        x=0.5,
+        y=0.5,
+        xref="paper",
+        yref="paper",
+        showarrow=False,
+        font=dict(size=13, color="#91a4c4"),
+    )
+    return make_figure_base(fig, title, height=height)
+
+
+_MAX_LABEL_LEN = 32
+
+
+def _truncate_label(text: str) -> str:
+    return text[: _MAX_LABEL_LEN - 1] + "…" if len(text) > _MAX_LABEL_LEN else text
+
+
 def make_horizontal_bar(data: pd.Series, title: str, color_index: int = 1) -> go.Figure:
     if data.empty:
-        return make_figure_base(go.Figure(), title, height=320)
+        return make_empty_figure(title, height=320)
 
     plot_df = data.reset_index()
     plot_df.columns = ["label", "count"]
+    plot_df["label"] = plot_df["label"].astype(str).map(_truncate_label)
     plot_df = plot_df.sort_values("count", ascending=True)
 
     fig = px.bar(
@@ -447,13 +638,13 @@ def make_horizontal_bar(data: pd.Series, title: str, color_index: int = 1) -> go
         xaxis_title=None,
         yaxis_title=None,
     )
-    return make_figure_base(fig, title, height=330)
+    return make_figure_base(fig, title, height=max(300, 60 + len(plot_df) * 36))
 
 
 def make_pie(series: pd.Series, title: str, color_sequence: list[str]) -> go.Figure:
     counts = series.dropna().value_counts()
     if counts.empty:
-        return make_figure_base(go.Figure(), title, height=320)
+        return make_empty_figure(title, height=320)
 
     fig = px.pie(
         names=counts.index,
@@ -468,7 +659,7 @@ def make_pie(series: pd.Series, title: str, color_sequence: list[str]) -> go.Fig
 
 def make_heatmap(table: pd.DataFrame, title: str) -> go.Figure:
     if table.empty:
-        return make_figure_base(go.Figure(), title, height=320)
+        return make_empty_figure(title, height=320)
 
     fig = go.Figure(
         data=go.Heatmap(
@@ -571,20 +762,22 @@ def build_insights(frame: pd.DataFrame, cols: dict[str, str]) -> list[str]:
     return sentences
 
 
-def prepare_model(frame: pd.DataFrame, cols: dict[str, str]) -> tuple[Pipeline | None, float | None, pd.DataFrame, list[str]]:
+def prepare_model(
+    frame: pd.DataFrame, cols: dict[str, str]
+) -> tuple[Pipeline | None, float | None, pd.DataFrame, list[str], list | None, list | None]:
     feature_cols = [cols["interest"], cols["studying"], cols["grade"]]
     target_col = cols["career"]
     model_frame = frame[feature_cols + [target_col]].copy()
     model_frame = model_frame.dropna(subset=[target_col])
 
     if model_frame.empty or model_frame[feature_cols].dropna(how="all").shape[0] < 6:
-        return None, None, model_frame, feature_cols
+        return None, None, model_frame, feature_cols, None, None
 
     X = model_frame[feature_cols]
     y = model_frame[target_col].astype(str)
 
     if y.nunique() < 2:
-        return None, None, model_frame, feature_cols
+        return None, None, model_frame, feature_cols, None, None
 
     stratify = y if y.value_counts().min() >= 2 else None
     X_train, X_test, y_train, y_test = train_test_split(
@@ -623,8 +816,9 @@ def prepare_model(frame: pd.DataFrame, cols: dict[str, str]) -> tuple[Pipeline |
         ]
     )
     model.fit(X_train, y_train)
-    accuracy = accuracy_score(y_test, model.predict(X_test))
-    return model, accuracy, model_frame, feature_cols
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    return model, accuracy, model_frame, feature_cols, list(y_test), list(y_pred)
 
 
 def render_metric_card(title: str, value: str, caption: str, accent: str) -> None:
@@ -705,6 +899,498 @@ def load_and_filter_data(uploaded_file_bytes: bytes | None) -> tuple[pd.DataFram
     return raw_df, cols, work_df, grade_values, gender_values
 
 
+# ─── UI render helpers ────────────────────────────────────────────────────────
+
+def render_sidebar(
+    work_df: pd.DataFrame,
+    cols: dict[str, str],
+    grade_values: list[str],
+    gender_values: list[str],
+    uploaded_file: object,
+) -> tuple[list[str], list[str]]:
+    """Render sidebar UI below the file uploader and return (selected_grades, selected_genders)."""
+
+    # ── Dataset source indicator ──────────────────────────────────────────────
+    if uploaded_file is not None:
+        st.sidebar.markdown(
+            '<span class="source-badge source-uploaded">⬆ Uploaded CSV</span>',
+            unsafe_allow_html=True,
+        )
+        st.sidebar.caption(f"File: **{uploaded_file.name}**")
+    else:
+        st.sidebar.markdown(
+            '<span class="source-badge source-sample">🔗 Sample dataset</span>',
+            unsafe_allow_html=True,
+        )
+        st.sidebar.caption("Using the linked Google Sheets sample.")
+
+    st.sidebar.markdown("---")
+
+    # ── Session-state keys: reset when data source changes ───────────────────
+    source_key = uploaded_file.name if uploaded_file is not None else "__sample__"
+    if st.session_state.get("_data_source_key") != source_key:
+        st.session_state["_data_source_key"] = source_key
+        st.session_state.pop("grade_filter", None)
+        st.session_state.pop("gender_filter", None)
+
+    # ── Filter controls ───────────────────────────────────────────────────────
+    st.sidebar.markdown("### Filters")
+
+    selected_grades: list[str] = st.sidebar.multiselect(
+        "Grade level",
+        grade_values,
+        default=grade_values,
+        key="grade_filter",
+    )
+    selected_genders: list[str] = st.sidebar.multiselect(
+        "Gender",
+        gender_values,
+        default=gender_values,
+        key="gender_filter",
+    )
+
+    filters_active = (
+        set(selected_grades) != set(grade_values)
+        or set(selected_genders) != set(gender_values)
+    )
+    if filters_active:
+        if st.sidebar.button("↺ Reset filters", use_container_width=True):
+            st.session_state["grade_filter"] = grade_values
+            st.session_state["gender_filter"] = gender_values
+            st.rerun()
+
+    st.sidebar.markdown("---")
+
+    # ── Dataset snapshot ──────────────────────────────────────────────────────
+    st.sidebar.markdown("### Dataset snapshot")
+    filtered_count = len(work_df)
+    if selected_grades:
+        filtered_count = len(
+            work_df[work_df[cols["grade"]].map(class_to_str).isin(selected_grades)]
+        )
+    st.sidebar.markdown(
+        f"""
+        <div class="metric-card" style="--accent: #2563eb; min-height: auto; margin-bottom: 0.8rem;">
+            <div class="metric-label">Rows after filters</div>
+            <div class="metric-value" style="font-size: 1.7rem;">{filtered_count}</div>
+            <div class="metric-caption">{len(work_df)} rows loaded from the source dataset.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.sidebar.caption(
+        "Detected columns are mapped automatically from Georgian or English headers.")
+
+    st.sidebar.markdown("---")
+
+    # ── Export expander ───────────────────────────────────────────────────────
+    with st.sidebar.expander("📥 Export", expanded=False):
+        st.caption("Download the currently filtered dataset as a CSV file.")
+        # Compute filtered_df here for the download (grades + genders)
+        dl_df = work_df.copy()
+        if selected_grades:
+            dl_df = dl_df[dl_df[cols["grade"]].map(class_to_str).isin(selected_grades)]
+        if selected_genders:
+            dl_df = dl_df[dl_df[cols["gender"]].map(class_to_str).isin(selected_genders)]
+        st.download_button(
+            "Download filtered CSV",
+            dl_df.to_csv(index=False).encode("utf-8"),
+            file_name="it_career_filtered.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+    return selected_grades, selected_genders
+
+
+def render_active_filters_summary(
+    selected_grades: list[str],
+    grade_values: list[str],
+    selected_genders: list[str],
+    gender_values: list[str],
+) -> None:
+    """Show active-filter chips near the top of the main content area."""
+    grade_filtered = set(selected_grades) != set(grade_values)
+    gender_filtered = set(selected_genders) != set(gender_values)
+
+    if not grade_filtered and not gender_filtered:
+        return  # nothing to show when all defaults are active
+
+    chips_html = '<div class="chips-row">'
+    chips_html += '<span class="chips-note">Active filters:</span>'
+
+    if grade_filtered:
+        for g in sorted(selected_grades):
+            chips_html += f'<span class="chip"><span class="chip-label">Grade</span>{g}</span>'
+
+    if gender_filtered:
+        for g in sorted(selected_genders):
+            chips_html += f'<span class="chip"><span class="chip-label">Gender</span>{g}</span>'
+
+    chips_html += "</div>"
+    st.markdown(chips_html, unsafe_allow_html=True)
+
+
+def render_data_quality(
+    filtered_df: pd.DataFrame, raw_df: pd.DataFrame, cols: dict[str, str]
+) -> None:
+    """Show a compact data-quality / coverage block below the KPI cards."""
+    req_cols = {k: cols[k] for k in REQUIRED_COLUMNS if k in cols}
+
+    items_html = ""
+    for key, col in req_cols.items():
+        total = len(filtered_df)
+        missing = int(filtered_df[col].isna().sum())
+        pct_missing = round(missing / total * 100, 1) if total else 0
+        css_cls = "dq-good" if pct_missing == 0 else ("dq-warn" if pct_missing < 15 else "dq-bad")
+        label = key.capitalize()
+        items_html += (
+            f'<div class="dq-item">'
+            f'<div class="dq-item-label">{label} missing</div>'
+            f'<div class="dq-item-val {css_cls}">{missing} ({pct_missing}%)</div>'
+            f"</div>"
+        )
+
+    unique_grades = filtered_df[cols["grade"]].dropna().nunique()
+    unique_genders = filtered_df[cols["gender"]].dropna().nunique()
+    items_html += (
+        f'<div class="dq-item">'
+        f'<div class="dq-item-label">Unique grades</div>'
+        f'<div class="dq-item-val dq-good">{unique_grades}</div>'
+        f"</div>"
+        f'<div class="dq-item">'
+        f'<div class="dq-item-label">Unique genders</div>'
+        f'<div class="dq-item-val dq-good">{unique_genders}</div>'
+        f"</div>"
+    )
+
+    st.markdown(
+        f'<div class="dq-block">'
+        f'<div class="dq-title">📋 Data quality &amp; coverage</div>'
+        f'<div class="dq-grid">{items_html}</div>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_insights_section(insights: list[str]) -> None:
+    """Show 1–2 key takeaways prominently, with the full list under an expander."""
+    takeaways = insights[:2]
+    rest = insights[2:]
+
+    # Key takeaway cards
+    cards_html = '<div class="takeaway-wrap">'
+    for i, text in enumerate(takeaways):
+        cards_html += (
+            f'<div class="takeaway-card">'
+            f'<div class="takeaway-label">💡 Key takeaway {i + 1}</div>'
+            f'<div class="takeaway-text">{text}</div>'
+            f"</div>"
+        )
+    cards_html += "</div>"
+    st.markdown(cards_html, unsafe_allow_html=True)
+
+    # Full list in expander
+    if rest:
+        with st.expander("View all insights", expanded=False):
+            st.markdown(
+                '<ul class="insight-list">' +
+                "".join(f"<li>{s}</li>" for s in insights) +
+                "</ul>",
+                unsafe_allow_html=True,
+            )
+
+
+def render_overview(
+    filtered_df: pd.DataFrame,
+    cols: dict[str, str],
+    interest_yes_pct: float,
+) -> None:
+    """Render the Overview charts tab."""
+    section_heading(
+        "Overview charts",
+        "A clean, high-level view of what students selected, preferred, and struggled with.",
+    )
+
+    top_row_left, top_row_right = st.columns(2)
+    with top_row_left:
+        st.plotly_chart(
+            make_pie(filtered_df[cols["interest"]], "Interest in IT",
+                     ["#2563eb", "#7c3aed", "#14b8a6", "#f59e0b"]),
+            use_container_width=True,
+        )
+        st.caption(f"{interest_yes_pct}% of visible responses indicate interest in IT.")
+    with top_row_right:
+        st.plotly_chart(
+            make_pie(filtered_df[cols["gender"]], "Gender distribution",
+                     ["#7c3aed", "#2563eb", "#14b8a6", "#f59e0b"]),
+            use_container_width=True,
+        )
+        st.caption("This acts as the demographic anchor for the rest of the dashboard.")
+
+    chart_cols = st.columns(3)
+    field_series = (
+        split_multiselect(filtered_df[cols["field"]]) if "field" in cols else pd.Series(dtype=int)
+    )
+    motivation_series = (
+        split_multiselect(filtered_df[cols["motivation"]])
+        if "motivation" in cols
+        else pd.Series(dtype=int)
+    )
+    barrier_series = (
+        split_multiselect(filtered_df[cols["barriers"]])
+        if "barriers" in cols
+        else pd.Series(dtype=int)
+    )
+
+    with chart_cols[0]:
+        st.plotly_chart(
+            make_horizontal_bar(field_series, "Most preferred IT fields", 1),
+            use_container_width=True,
+        )
+        st.caption("This section shows where curiosity is concentrated.")
+    with chart_cols[1]:
+        st.plotly_chart(
+            make_horizontal_bar(motivation_series, "Motivations for choosing IT", 2),
+            use_container_width=True,
+        )
+        st.caption("Motivation is the strongest signal behind future action.")
+    with chart_cols[2]:
+        st.plotly_chart(
+            make_horizontal_bar(barrier_series, "Barriers to learning IT", 3),
+            use_container_width=True,
+        )
+        st.caption("The main friction points that slow down conversion into active study.")
+
+    if "learning" in cols and cols["learning"] in filtered_df:
+        st.plotly_chart(
+            make_horizontal_bar(
+                split_multiselect(filtered_df[cols["learning"]]),
+                "Preferred learning methods",
+                4,
+            ),
+            use_container_width=True,
+        )
+        st.caption(
+            "Preferred learning methods help shape the next intervention or club activity."
+        )
+
+
+def render_relationships(filtered_df: pd.DataFrame, cols: dict[str, str]) -> None:
+    """Render the Relationships tab (heatmaps + tables)."""
+    section_heading(
+        "Relationships",
+        "This is where the dashboard moves from counts to structure and compares groups.",
+    )
+
+    rel_col1, rel_col2 = st.columns(2)
+    study_interest_table = pct_table(filtered_df, cols["studying"], cols["interest"])
+    career_interest_table = pct_table(filtered_df, cols["career"], cols["interest"])
+    grade_interest_table = pct_table(filtered_df, cols["grade"], cols["interest"])
+
+    with rel_col1:
+        st.plotly_chart(
+            make_heatmap(study_interest_table, "Interest vs studying status (%)"),
+            use_container_width=True,
+        )
+        st.dataframe(format_pct_table(study_interest_table), use_container_width=True)
+    with rel_col2:
+        st.plotly_chart(
+            make_heatmap(career_interest_table, "Interest vs career choice (%)"),
+            use_container_width=True,
+        )
+        st.dataframe(format_pct_table(career_interest_table), use_container_width=True)
+
+    st.plotly_chart(
+        make_heatmap(grade_interest_table, "Grade vs interest (%)"),
+        use_container_width=True,
+    )
+    st.dataframe(format_pct_table(grade_interest_table), use_container_width=True)
+
+
+def render_prediction_lab(
+    filtered_df: pd.DataFrame,
+    work_df: pd.DataFrame,
+    cols: dict[str, str],
+    grade_values: list[str],
+) -> None:
+    """Render the Prediction Lab tab."""
+    section_heading(
+        "Prediction lab",
+        "A lightweight model that estimates career choice from a few core survey answers.",
+    )
+
+    # Model info / disclaimer
+    st.markdown(
+        '<div class="model-info">'
+        "<strong>How this works:</strong> A Decision Tree classifier is trained on the "
+        "currently filtered slice using <em>interest level</em>, <em>studying status</em>, "
+        "and <em>grade</em> as features to predict <em>career choice</em>. "
+        "Results are indicative — the model re-trains live on each filter change and "
+        "requires at least 6 labelled rows with two distinct career-choice classes. "
+        "A 75/25 train/test split is used; the reported accuracy reflects the hold-out set."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    model, accuracy, model_frame, feature_cols, y_test, y_pred = prepare_model(
+        filtered_df, cols
+    )
+
+    if model is None or accuracy is None:
+        st.info(
+            "⚠️ There is not enough balanced data to train a reliable model with the current "
+            "filter selection. Try widening your grade or gender filters."
+        )
+        return
+
+    # KPI row
+    score_cols = st.columns(3)
+    with score_cols[0]:
+        render_metric_card(
+            "Model accuracy",
+            f"{accuracy * 100:.1f}%",
+            "Hold-out score from the current filtered slice.",
+            COLOR_SEQUENCE[4],
+        )
+    with score_cols[1]:
+        render_metric_card(
+            "Training rows",
+            f"{len(model_frame)}",
+            "Rows kept after removing incomplete target values.",
+            COLOR_SEQUENCE[5],
+        )
+    with score_cols[2]:
+        render_metric_card(
+            "Input features",
+            f"{len(feature_cols)}",
+            "Interest, studying status, and grade.",
+            COLOR_SEQUENCE[6],
+        )
+
+    # Feature importance
+    classifier = model.named_steps["classifier"]
+    importances = pd.Series(
+        classifier.feature_importances_, index=feature_cols
+    ).sort_values(ascending=False)
+    st.plotly_chart(
+        make_horizontal_bar(importances, "Feature importance", 1),
+        use_container_width=True,
+    )
+
+    # Class distribution of target
+    career_dist = model_frame[cols["career"]].value_counts()
+    with st.expander("Target class distribution", expanded=False):
+        st.caption(
+            "Shows how many rows belong to each career-choice category in the training data. "
+            "Very imbalanced distributions reduce prediction reliability."
+        )
+        st.plotly_chart(
+            make_horizontal_bar(career_dist, "Career choice distribution", 3),
+            use_container_width=True,
+        )
+
+    # Confusion matrix (if test predictions available)
+    if y_test is not None and y_pred is not None:
+        classes = sorted(set(y_test) | set(y_pred))
+        if len(classes) >= 2:
+            with st.expander("Confusion matrix (hold-out set)", expanded=False):
+                st.caption(
+                    "Rows = actual labels, columns = predicted labels. "
+                    "Diagonal cells are correct predictions."
+                )
+                cm = confusion_matrix(y_test, y_pred, labels=classes)
+                cm_df = pd.DataFrame(cm, index=classes, columns=classes)
+                cm_fig = make_heatmap(
+                    cm_df.astype(float), "Confusion matrix (counts)"
+                )
+                st.plotly_chart(cm_fig, use_container_width=True)
+
+    # Interactive prediction form
+    st.markdown("#### Try a prediction")
+    with st.form("career_prediction_form"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            interest_choice = st.selectbox(
+                "Interest level",
+                sorted(
+                    {class_to_str(v) for v in work_df[cols["interest"]].dropna().unique()}
+                ),
+            )
+        with c2:
+            studying_choice = st.selectbox(
+                "Currently studying",
+                sorted(
+                    {class_to_str(v) for v in work_df[cols["studying"]].dropna().unique()}
+                ),
+            )
+        with c3:
+            grade_choice = st.selectbox("Grade", grade_values)
+        submitted = st.form_submit_button("🔮 Predict career choice", use_container_width=True)
+
+    if submitted:
+        input_frame = pd.DataFrame(
+            [
+                {
+                    cols["interest"]: interest_choice,
+                    cols["studying"]: studying_choice,
+                    cols["grade"]: grade_choice,
+                }
+            ]
+        )
+        prediction = model.predict(input_frame)[0]
+        probability: float | None = None
+        if hasattr(model, "predict_proba"):
+            classes_list = list(classifier.classes_)
+            if prediction in classes_list:
+                probability = float(
+                    model.predict_proba(input_frame)[0][classes_list.index(prediction)]
+                )
+
+        conf_str = (
+            f'<div class="pred-result-conf">{probability * 100:.1f}% model confidence</div>'
+            if probability is not None
+            else ""
+        )
+        st.markdown(
+            f'<div class="pred-result">'
+            f'<div class="pred-result-label">Predicted career choice</div>'
+            f'<div class="pred-result-value">{prediction}</div>'
+            f"{conf_str}"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+
+def render_open_responses(filtered_df: pd.DataFrame, cols: dict[str, str]) -> None:
+    """Render the Open Responses tab."""
+    section_heading(
+        "Open responses",
+        "Short text answers are often the most useful place to spot recurring themes.",
+    )
+
+    if "opinion" in cols and cols["opinion"] in filtered_df:
+        opinions = filtered_df[cols["opinion"]].dropna().astype(str)
+        if opinions.empty:
+            st.info("No open-ended responses are available.")
+        else:
+            words = top_response_words(opinions)
+            if not words.empty:
+                st.plotly_chart(
+                    make_horizontal_bar(words, "Common words in open responses", 2),
+                    use_container_width=True,
+                )
+                st.caption(
+                    "Only words with four or more characters are counted to keep the chart readable."
+                )
+            st.dataframe(
+                opinions.head(50).to_frame(name="Open response"),
+                use_container_width=True,
+            )
+    else:
+        st.info("The uploaded dataset does not include an open-response column.")
+
+
 def main() -> None:
     st.set_page_config(
         page_title=APP_TITLE,
@@ -714,10 +1400,12 @@ def main() -> None:
     )
     apply_theme()
 
+    # ── Sidebar: file uploader (must be first widget) ─────────────────────────
+    # We render a minimal uploader here to capture the file, then pass it to
+    # render_sidebar() which builds the full sidebar UI.
     st.sidebar.markdown("### Data controls")
-    st.sidebar.caption(
-        "Upload a CSV export from Google Forms or analyze the linked sample dataset.")
-    uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
+    uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"],
+                                              label_visibility="visible")
 
     uploaded_bytes = uploaded_file.getvalue() if uploaded_file is not None else None
 
@@ -728,45 +1416,27 @@ def main() -> None:
         st.error(f"Failed to load the survey data: {exc}")
         st.stop()
 
-    st.sidebar.markdown("### Filters")
-    selected_grades = st.sidebar.multiselect(
-        "Grade level", grade_values, default=grade_values)
-    selected_genders = st.sidebar.multiselect(
-        "Gender", gender_values, default=gender_values)
+    # ── Sidebar (source indicator, filters, snapshot, export) ─────────────────
+    selected_grades, selected_genders = render_sidebar(
+        work_df, cols, grade_values, gender_values, uploaded_file
+    )
 
+    # ── Apply filters ─────────────────────────────────────────────────────────
     filtered_df = work_df.copy()
     if selected_grades:
-        filtered_df = filtered_df[filtered_df[cols["grade"]].map(
-            class_to_str).isin(selected_grades)]
+        filtered_df = filtered_df[
+            filtered_df[cols["grade"]].map(class_to_str).isin(selected_grades)
+        ]
     if selected_genders:
-        filtered_df = filtered_df[filtered_df[cols["gender"]].map(
-            class_to_str).isin(selected_genders)]
-
-    st.sidebar.markdown("### Dataset snapshot")
-    st.sidebar.markdown(
-        f"""
-        <div class="metric-card" style="--accent: #2563eb; min-height: auto; margin-bottom: 0.8rem;">
-            <div class="metric-label">Rows after filters</div>
-            <div class="metric-value" style="font-size: 1.7rem;">{len(filtered_df)}</div>
-            <div class="metric-caption">{len(raw_df)} rows loaded from the source dataset.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.sidebar.caption(
-        "Detected columns are mapped automatically from Georgian or English headers.")
-    st.sidebar.download_button(
-        "Download filtered CSV",
-        filtered_df.to_csv(index=False).encode("utf-8"),
-        file_name="it_career_filtered.csv",
-        mime="text/csv",
-        use_container_width=True,
-    )
+        filtered_df = filtered_df[
+            filtered_df[cols["gender"]].map(class_to_str).isin(selected_genders)
+        ]
 
     if filtered_df.empty:
         st.warning("No responses match the active filters.")
         st.stop()
 
+    # ── Derived KPI values ────────────────────────────────────────────────────
     total_responses = len(filtered_df)
     interest_yes_count, interest_yes_pct = percent(
         filtered_df[cols["interest"]], POSITIVE_MARKERS["yes"])
@@ -779,6 +1449,7 @@ def main() -> None:
     hero_summary = insights[0]
     hero_support = insights[1:3]
 
+    # ── Hero banner ───────────────────────────────────────────────────────────
     st.markdown(
         f"""
         <div class="hero-shell">
@@ -803,6 +1474,12 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
+    # ── Active-filter chips ───────────────────────────────────────────────────
+    render_active_filters_summary(
+        selected_grades, grade_values, selected_genders, gender_values
+    )
+
+    # ── KPI metric cards ──────────────────────────────────────────────────────
     metric_cols = st.columns(4)
     with metric_cols[0]:
         render_metric_card("Total responses", f"{total_responses}",
@@ -817,195 +1494,30 @@ def main() -> None:
         render_metric_card("Planning IT career", f"{career_yes_pct}%",
                            f"{career_yes_count} positive responses detected.", COLOR_SEQUENCE[3])
 
-    st.markdown(
-        """
-        <div class="insight-card">
-            <h3>Automatic story from the data</h3>
-            <ul class="insight-list">
-        """,
-        unsafe_allow_html=True,
-    )
-    for sentence in insights:
-        st.markdown(f"<li>{sentence}</li>", unsafe_allow_html=True)
-    st.markdown("</ul></div>", unsafe_allow_html=True)
+    # ── Data quality block ────────────────────────────────────────────────────
+    render_data_quality(filtered_df, raw_df, cols)
 
+    # ── Key takeaways + insights expander ─────────────────────────────────────
+    render_insights_section(insights)
+
+    # ── Analysis tabs ─────────────────────────────────────────────────────────
     tab_overview, tab_relationships, tab_ml, tab_text = st.tabs(
-        ["Overview", "Relationships", "Prediction Lab", "Open responses"]
+        ["📊 Overview", "🔗 Relationships", "🤖 Prediction Lab", "💬 Open responses"]
     )
 
     with tab_overview:
-        section_heading(
-            "Overview charts", "A clean, high-level view of what students selected, preferred, and struggled with.")
-
-        top_row_left, top_row_right = st.columns(2)
-        with top_row_left:
-            st.plotly_chart(
-                make_pie(filtered_df[cols["interest"]], "Interest in IT", [
-                         "#2563eb", "#7c3aed", "#14b8a6", "#f59e0b"]),
-                use_container_width=True,
-            )
-            st.caption(
-                f"{interest_yes_pct}% of visible responses indicate interest in IT.")
-        with top_row_right:
-            st.plotly_chart(
-                make_pie(filtered_df[cols["gender"]], "Gender distribution", [
-                         "#7c3aed", "#2563eb", "#14b8a6", "#f59e0b"]),
-                use_container_width=True,
-            )
-            st.caption(
-                "This acts as the demographic anchor for the rest of the dashboard.")
-
-        chart_cols = st.columns(3)
-        field_series = split_multiselect(
-            filtered_df[cols["field"]]) if "field" in cols else pd.Series(dtype=int)
-        motivation_series = split_multiselect(
-            filtered_df[cols["motivation"]]) if "motivation" in cols else pd.Series(dtype=int)
-        barrier_series = split_multiselect(
-            filtered_df[cols["barriers"]]) if "barriers" in cols else pd.Series(dtype=int)
-
-        with chart_cols[0]:
-            st.plotly_chart(make_horizontal_bar(
-                field_series, "Most preferred IT fields", 1), use_container_width=True)
-            st.caption("This section shows where curiosity is concentrated.")
-        with chart_cols[1]:
-            st.plotly_chart(make_horizontal_bar(
-                motivation_series, "Motivations for choosing IT", 2), use_container_width=True)
-            st.caption(
-                "Motivation is the strongest signal behind future action.")
-        with chart_cols[2]:
-            st.plotly_chart(make_horizontal_bar(
-                barrier_series, "Barriers to learning IT", 3), use_container_width=True)
-            st.caption(
-                "The main friction points that slow down conversion into active study.")
-
-        if "learning" in cols and cols["learning"] in filtered_df:
-            st.plotly_chart(
-                make_horizontal_bar(split_multiselect(
-                    filtered_df[cols["learning"]]), "Preferred learning methods", 4),
-                use_container_width=True,
-            )
-            st.caption(
-                "Preferred learning methods help shape the next intervention or club activity.")
+        render_overview(filtered_df, cols, interest_yes_pct)
 
     with tab_relationships:
-        section_heading(
-            "Relationships", "This is where the dashboard moves from counts to structure and compares groups.")
-
-        rel_col1, rel_col2 = st.columns(2)
-        study_interest_table = pct_table(
-            filtered_df, cols["studying"], cols["interest"])
-        career_interest_table = pct_table(
-            filtered_df, cols["career"], cols["interest"])
-        grade_interest_table = pct_table(
-            filtered_df, cols["grade"], cols["interest"])
-
-        with rel_col1:
-            st.plotly_chart(make_heatmap(
-                study_interest_table, "Interest vs studying status (%)"), use_container_width=True)
-            st.dataframe(format_pct_table(study_interest_table),
-                         use_container_width=True)
-        with rel_col2:
-            st.plotly_chart(make_heatmap(
-                career_interest_table, "Interest vs career choice (%)"), use_container_width=True)
-            st.dataframe(format_pct_table(career_interest_table),
-                         use_container_width=True)
-
-        st.plotly_chart(make_heatmap(grade_interest_table,
-                        "Grade vs interest (%)"), use_container_width=True)
-        st.dataframe(format_pct_table(grade_interest_table),
-                     use_container_width=True)
+        render_relationships(filtered_df, cols)
 
     with tab_ml:
-        section_heading(
-            "Prediction lab", "A lightweight model that estimates career choice from a few core survey answers.")
-
-        model, accuracy, model_frame, feature_cols = prepare_model(
-            filtered_df, cols)
-
-        if model is None or accuracy is None:
-            st.info(
-                "There is not enough balanced data to train a reliable model yet.")
-        else:
-            score_cols = st.columns(3)
-            with score_cols[0]:
-                render_metric_card("Model accuracy", f"{accuracy * 100:.1f}%",
-                                   "Hold-out score from the current filtered slice.", COLOR_SEQUENCE[4])
-            with score_cols[1]:
-                render_metric_card(
-                    "Training rows", f"{len(model_frame)}", "Rows kept after removing incomplete target values.", COLOR_SEQUENCE[5])
-            with score_cols[2]:
-                render_metric_card(
-                    "Input features", f"{len(feature_cols)}", "Interest, studying status, and grade.", COLOR_SEQUENCE[6])
-
-            classifier = model.named_steps["classifier"]
-            importances = pd.Series(
-                classifier.feature_importances_, index=feature_cols).sort_values(ascending=False)
-            st.plotly_chart(make_horizontal_bar(
-                importances, "Feature importance", 1), use_container_width=True)
-
-            st.markdown("#### Interactive prediction")
-            with st.form("career_prediction_form"):
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    interest_choice = st.selectbox(
-                        "Interest",
-                        sorted({class_to_str(value)
-                               for value in work_df[cols["interest"]].dropna().unique()}),
-                    )
-                with c2:
-                    studying_choice = st.selectbox(
-                        "Currently studying",
-                        sorted({class_to_str(value)
-                               for value in work_df[cols["studying"]].dropna().unique()}),
-                    )
-                with c3:
-                    grade_choice = st.selectbox("Grade", grade_values)
-                submitted = st.form_submit_button("Predict career choice")
-
-            if submitted:
-                input_frame = pd.DataFrame(
-                    [
-                        {
-                            cols["interest"]: interest_choice,
-                            cols["studying"]: studying_choice,
-                            cols["grade"]: grade_choice,
-                        }
-                    ]
-                )
-                prediction = model.predict(input_frame)[0]
-                probability = None
-                if hasattr(model, "predict_proba"):
-                    classes = list(classifier.classes_)
-                    if prediction in classes:
-                        probability = float(model.predict_proba(input_frame)[
-                                            0][classes.index(prediction)])
-                if probability is not None:
-                    st.success(
-                        f"Predicted career choice: {prediction} ({probability * 100:.1f}% confidence)")
-                else:
-                    st.success(f"Predicted career choice: {prediction}")
+        render_prediction_lab(filtered_df, work_df, cols, grade_values)
 
     with tab_text:
-        section_heading(
-            "Open responses", "Short text answers are often the most useful place to spot recurring themes.")
-
-        if "opinion" in cols and cols["opinion"] in filtered_df:
-            opinions = filtered_df[cols["opinion"]].dropna().astype(str)
-            if opinions.empty:
-                st.info("No open-ended responses are available.")
-            else:
-                words = top_response_words(opinions)
-                if not words.empty:
-                    st.plotly_chart(make_horizontal_bar(
-                        words, "Common words in open responses", 2), use_container_width=True)
-                    st.caption(
-                        "Only words with four or more characters are counted to keep the chart readable.")
-
-                st.dataframe(opinions.head(50).to_frame(
-                    name="Open response"), use_container_width=True)
-        else:
-            st.info("The uploaded dataset does not include an open-response column.")
+        render_open_responses(filtered_df, cols)
 
 
 if __name__ == "__main__":
     main()
+
